@@ -13,6 +13,10 @@ class HomeViewModel(
     val user by lazy {
         repository.currentUser()
     }
+
+    fun getDataFromDatabase(uid:String){
+        repository.currentUser()
+    }
     
     fun logout(view: View){
         repository.logout()

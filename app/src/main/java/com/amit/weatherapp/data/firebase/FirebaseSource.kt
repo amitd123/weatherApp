@@ -40,21 +40,25 @@ class FirebaseSource {
         firebaseAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener {
             if (!emitter.isDisposed) {
                 if (it.isSuccessful) {
-                    val signUpUser: User = User(username, email, password, bio, "")
-                    firebaseDatabase = firebaseDatabaseInstances.getReference("users")
-                    //User data change Listener
-                    firebaseDatabase!!.child(it!!.result.user!!.uid).setValue(signUpUser).addOnCompleteListener({
-                        if (it.isSuccessful){
-                            emitter.onComplete()
-                        }else{
-                            it.exception?.let { it1 -> emitter.onError(it1) }
-                        }
-                    })
+                    Log.d("createUserWithEmailAndPassword","Successful")
+//                    val signUpUser: User = User(username, email, password, bio, "")
+//                    firebaseDatabase = firebaseDatabaseInstances.reference
+//                    //User data change Listener
+//                    firebaseDatabase!!.child("users").child(it!!.result.user!!.uid).child("userdata").setValue(signUpUser).addOnCompleteListener({
+//                        if (it.isSuccessful) {
+//                            Log.d("createUserWithEmailAndPassword","database insertion sucessfullSuccessful")
+//                            emitter.onComplete()
+//                        } else {
+//                            it.exception?.let { it1 ->
+//                                emitter.onError(it1)
+//                            }
+//                        }
+//                    })
 
-                    uploadImage(email,password,username,bio,uri,it.result.user!!.uid +".jpg",
-                        it.result.user!!.uid.toString(),emitter)
+                    uploadImage(email,password,username,bio,uri,it.result.user!!.uid +".jpg", it.result.user!!.uid.toString(),emitter)
 //                    emitter.onComplete()
                 } else {
+                    Log.d("createUserWithEmailAndPassword","auth failure")
                     emitter.onError(it.exception!!)
                 }
             }
@@ -72,18 +76,22 @@ class FirebaseSource {
         emitter: CompletableEmitter
     ) {
 //        val database = FirebaseDatabase.getInstance()
+        Log.d("createUserWithEmailAndPassword","image upload start")
         val refStorage = FirebaseStorage.getInstance().reference.child("images/$fileName")
         refStorage.putFile(uri)
             .addOnSuccessListener(
                 OnSuccessListener<UploadTask.TaskSnapshot> { taskSnapshot ->
                     taskSnapshot.storage.downloadUrl.addOnSuccessListener {
+                        Log.d("createUserWithEmailAndPassword","image upload success")
                         val signUpUser: User = User(username, email, password, bio, it.toString())
                         firebaseDatabase = firebaseDatabaseInstances.getReference("users")
                         //User data change Listener
                         firebaseDatabase!!.child(uuid).setValue(signUpUser).addOnCompleteListener({
                             if (it.isSuccessful){
+                                Log.d("createUserWithEmailAndPassword","database insertion success")
                                 emitter.onComplete()
                             }else{
+                                Log.d("createUserWithEmailAndPassword","database insertion failure +"+it.exception)
                                 it.exception?.let { it1 -> emitter.onError(it1) }
                             }
                         })
@@ -107,6 +115,7 @@ class FirebaseSource {
 
             ?.addOnFailureListener(OnFailureListener { e ->
                 print(e.message)
+                Log.d("createUserWithEmailAndPassword","image upload failure")
                 emitter.onError(e)
             })
     }
@@ -114,5 +123,46 @@ class FirebaseSource {
     fun logout() = firebaseAuth.signOut()
 
     fun currentUser() = firebaseAuth.currentUser
+
+
+/*
+    fun getDataFromDatabase(uuid: String)= Completable.create { emitter ->
+                            firebaseDatabase = firebaseDatabaseInstances.getReference("users").child(uuid)
+                            //User data change Listener
+                            firebaseDatabase.get().result
+                                .addOnCompleteListener({
+                                    if (it.isSuccessful) {
+                                        Log.d(
+                                            "createUserWithEmailAndPassword",
+                                            "database insertion success"
+                                        )
+                                        emitter.onComplete()
+                                    } else {
+                                        Log.d(
+                                            "createUserWithEmailAndPassword",
+                                            "database insertion failure +" + it.exception
+                                        )
+                                        it.exception?.let { it1 -> emitter.onError(it1) }
+                                    }
+                                })
+//                        val user=FirebaseAuth.getInstance().currentUser
+//                        val signUpUser:User = User(username,email,password,bio, it.toString())
+//                                firebaseDatabase =firebaseDatabaseInstances.getReference("users")
+//                                //User data change Listener
+//                                firebaseDatabase!!.child(user!!.uid).addValueEventListener(object:  ValueEventListener {
+//                            override fun onDataChange(dataSnapshot: DataSnapshot){
+//                                val user = dataSnapshot.getValue(User::class.java)
+//                                emitter.onComplete()
+//                            }
+//                            override fun onCancelled(error: DatabaseError){
+//                                //Failed to read value
+////                                Log.e(TAG,"Failed to read user",error.toException())
+//                                emitter.onError(error.toException())
+//                            }
+//                        })
+                        }
+*/
+//        }
+
 
 }
